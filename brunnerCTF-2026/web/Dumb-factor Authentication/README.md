@@ -1,4 +1,4 @@
-# TOTP Reset Successful
+# Dumb-factor Authentication
 
 **مسابقه:** Brunner CTF 2026  
 **دسته‌بندی:** Web  
@@ -13,11 +13,11 @@
 
 برای همین یک تیم تشکیل دادیم و در **Brunner CTF 2026**، یک CTF بین‌المللی، شرکت کردیم. در طول مسابقه، هرکدام از اعضای تیم سراغ چالش‌های مختلفی رفتیم و در نهایت توانستیم مجموعه‌ای از آن‌ها را حل کنیم.
 
-این Writeup حاصل تلاش تیم برای حل چالش **TOTP Reset Successful** است و در ادامه، مسیر تحلیل و راه‌حلی که به Flag منتهی شد را قدم‌به‌قدم بررسی می‌کنیم.
+این Writeup حاصل تلاش تیم برای حل چالش **Dumb-factor Authentication** است و در ادامه، مسیر تحلیل و راه‌حلی که به Flag منتهی شد را قدم‌به‌قدم بررسی می‌کنیم.
 
 ## چالش چه بود؟
 
-سناریو، پرتال HR شرکت Brunnerne است که برای «state-of-the-art» بودن، به‌جای پسورد از ورود **Passwordless** با مکانیزم « Dumb-Factor Authentication » استفاده می‌کند: فرم لاگین فقط یک **Username** و یک **کد TOTP شش‌رقمی** می‌گیرد و سرور برای «سرعت بالا» کدها را با یک **TOTP Verification Cache سفارشی** بررسی می‌کند.
+سناریو، پرتال HR شرکت Brunnerne است که برای «state-of-the-art» بودن، به‌جای پسورد از ورود **Passwordless** با مکانیزم « Dumb-Factor Authentication » استفاده می‌کند: فرم لاگین فقط یک **کد TOTP شش‌رقمی** می‌گیرد — حتی فیلد Username هم ندارد — و سرور برای «سرعت بالا» کدها را با یک **TOTP Verification Cache سفارشی** بررسی می‌کند.
 
 طبق داستان چالش، تیم امنیتی بعد از ممیزیِ مکانیزم احراز هویت به‌طور ناگهانی استعفا داده و گزارش نهایی ممیزی را در **یک تیکت خصوصیِ HR Feedback** ذخیره کرده است. پس هدف مشخص است:
 
@@ -42,7 +42,7 @@
 
 **۲) اتصال نتیجه‌ی تأیید به username دلخواه (Privilege Escalation).**
 
-نکته‌ی کلیدی این بود که همان کدِ معتبر پیدا‌شده، بعد از تغییر username به `admin` هم پذیرفته می‌شد؛ یعنی نتیجه‌ی تأییدِ کش، مستقل از این است که کدام کاربر آن را فرستاده و هویتِ نهاییِ Session از همان فیلد username سمت کلاینت می‌آید. کافی بود username را به `admin` تغییر دهیم تا به‌عنوان admin لاگین کنیم.
+نکته‌ی کلیدی این بود که فرمِ لاگین اصلاً فیلد username ندارد و فقط `code` را می‌فرستد؛ اما بک‌اند پارامتر `username` را هم در درخواست POST قبول می‌کند. یعنی نتیجه‌ی تأییدِ کش، مستقل از این است که کدام کاربر آن را فرستاده و هویتِ نهاییِ Session از همان فیلد username سمت کلاینت می‌آید. کافی بود درخواست را دستی بزنیم و `username=admin` را به‌عنوان پارامتر اضافه کنیم تا به‌عنوان admin لاگین کنیم.
 
 **۳) Reset کردن TOTP Secret بدون احراز هویت مجدد.**
 
@@ -52,26 +52,23 @@
 
 **گام ۱) Brute Force کد TOTP**
 
-اسکریپتی نوشتیم که از `999999` به پایین همه‌ی پین‌های ۶ رقمی را تست می‌کند تا لاگین موفق شود:
+اسکریپتی نوشتیم که از `999999` به پایین همه‌ی پین‌های ۶ رقمی را تست می‌کند تا لاگین موفق شود. چون فرم فقط `code` را می‌فرستد، پارامتر `username` را خودمان به درخواست POST اضافه کردیم:
 
 ```python
 import requests
 
-BASE = "https://totp.challs.brunnerne.xyz"
+BASE = "https://dumb-factor-authentication-44c42df26c2f02c2-global.challs.brunnerne.xyz"
 LOGIN = f"{BASE}/login"
 
-USERNAME = "user"  # username اولیه؛ همان‌جا شروع کردیم
-
-
-def try_login(username: str, code: str) -> bool:
-    r = requests.post(LOGIN, data={"username": username, "code": code})
+def try_login(code: str) -> bool:
+    r = requests.post(LOGIN, data={"pin": code})
     return "invalid" not in r.text.lower()
 
 
 found = None
 for pin in range(999_999, -1, -1):
     code = f"{pin:06d}"
-    if try_login(USERNAME, code):
+    if try_login(code):
         found = code
         print(f"[+] valid TOTP code: {code}")
         break
@@ -79,11 +76,8 @@ for pin in range(999_999, -1, -1):
 
 **گام ۲) تغییر username به admin**
 
-با همان کد معتبر، فقط username درخواست را عوض کردیم:
+با همان کد معتبر، فقط مقدار پارامتر `username` را در درخواست به `admin` تغییر دادیم:
 
-```python
-try_login("admin", found)  # → ورود موفق به‌عنوان admin
-```
 
 **گام ۳) Reset کردن TOTP Secret**
 
@@ -106,7 +100,7 @@ pyotp.TOTP(secret).now()  # کد ۶ رقمیِ معتبرِ لحظه‌ی فعل
 
 **گام ۵) خروج و ورود مجدد به‌عنوان admin**
 
-یک بار از برنامه خارج شدیم و دوباره با username=`admin` و کدی که برنامه‌ی OTP در همان لحظه تولید کرده بود لاگین کردیم — این بار یک ورود «تمیز» و پایدار به اکانت admin.
+یک بار از برنامه خارج شدیم و دوباره با `username=admin` (به‌عنوان پارامتر اضافه‌شده به درخواست) و کدی که برنامه‌ی OTP در همان لحظه تولید کرده بود لاگین کردیم — این بار یک ورود «تمیز» و پایدار به اکانت admin.
 
 **گام ۶) خواندن تیکت‌ها**
 
