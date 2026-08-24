@@ -3,7 +3,7 @@
 **مسابقه:** Brunner CTF 2026  
 **دسته‌بندی:** Web  
 **سختی:** متوسط  
-**نویسنده:** @arminkheirkhahan
+**نویسنده:** @HellSpectr
 
 ---
 
@@ -179,4 +179,4 @@ brunner{...}
 
 ---
 
-**نویسنده:** @arminkheirkhahan
+**نویسنده:** @HellSpectr
