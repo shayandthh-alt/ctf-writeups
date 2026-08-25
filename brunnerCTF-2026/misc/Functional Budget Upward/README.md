@@ -570,5 +570,5 @@ a*x+b
 ## Flag
 
 ```text
-brunner{th3_dr4ft_sh1pp3d_w1th_th3_4ppr0v4l}
+brunner{why_use_m4ny_funct1on_wh3n_on3_do_tr1ck}
 ```
