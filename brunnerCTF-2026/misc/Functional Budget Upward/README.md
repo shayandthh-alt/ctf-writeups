@@ -1,15 +1,13 @@
-### Functional Budget
+# Functional Budget — Misc Write-up
+
 **مسابقه:** Brunner 2026
 **دسته‌بندی:** Misc
 **سختی:** متوسط
 **نویسنده:** Nightlord(Upward)
 
+---
 
 
-
-
-
-# Functional Budget — Misc Write-up
 
 ## ایده‌ی چالش
 
