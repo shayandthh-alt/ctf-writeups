@@ -1,7 +1,10 @@
 ### Functional Budget
-**مسابقه:** Brunner 2026
+**مسابقه:** BrunnerCTF 2026 
+
 **دسته‌بندی:** Misc
+
 **سختی:** متوسط
+
 **نویسنده:** Nightlord(Upward)
 
 
